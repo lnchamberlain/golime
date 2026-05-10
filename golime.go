@@ -41,6 +41,7 @@ func initLiME(f *os.File) (*LiME, error) {
 					return nil, err
 				}
 				reader.r.Reset(f)
+				continue
 			}
 		}
 		// slide forward
