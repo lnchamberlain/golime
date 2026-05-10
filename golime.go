@@ -34,7 +34,7 @@ func initLiME(f *os.File) (*LiME, error) {
 				block := limeBlock{fileOffset: reader.pos + LIME_HEADER_SIZE, header: candidate}
 				blocks = append(blocks, block)
 				// jump to the next block, raw data between headers, can skip using the size
-				nextBlock := int64(LIME_HEADER_SIZE + (candidate.EndAddress - candidate.StartAddress))
+				nextBlock := int64(reader.pos) + int64(LIME_HEADER_SIZE) + int64(candidate.EndAddress-candidate.StartAddress)
 				reader.pos = uint64(nextBlock)
 				_, err := f.Seek(nextBlock, io.SeekStart)
 				if err != nil {
@@ -91,7 +91,7 @@ func (l *LiME) lookupOwningBlock(address uint64) (int, error) {
 	}
 	// FOR NOW - just scan through the blocks. In the future, make this much faster with binary search or a hashmap
 	for i, b := range l.blocks {
-		if b.header.StartAddress <= address && b.header.EndAddress >= address {
+		if b.header.StartAddress <= address && b.header.EndAddress > address {
 			return i, nil
 		}
 	}
@@ -106,6 +106,10 @@ func (l *LiME) Read(address uint64, size int) ([]byte, error) {
 	}
 	// get the owning block
 	block := l.blocks[idx]
+	if address+uint64(size) > block.header.EndAddress {
+		return nil, fmt.Errorf("read of size %d at 0x%x would exceed block boundary at 0x%x",
+			size, address, block.header.EndAddress)
+	}
 	// the specific offset into the file is the offset into the specific lime block
 	offset := int64(address - block.header.StartAddress + block.fileOffset)
 	// allocate a buffer to hold read data
