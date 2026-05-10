@@ -30,5 +30,26 @@ import (
 
 Now you can create a LiME object that implments `.Read()`:
 ```
-TODO - add the actual code here that shows how to use this package. 
+lime, err := golime.New("./test.lime")
+```
+Close the reader and underlying file:
+```
+defer lime.Close()
+````
+Print debug info like number of blocks and start/stop for each 
+```
+lime.DebugInfo(os.Stdout)
+```
+Example of that debug info: 
+```
+---- LiME Reader Info ----
+Blocks: 2
+BLOCK  START     END         FILE POS  SIZE
+0      0x1000    0x9fbff     32        0x9ebff
+1      0x100000  0x7ffeffff  650304    0x7feeffff
+```
+Read a physical address, accepts a physical address and a size
+```
+var testPhysAddress uint64 = 0x1000
+data, err := lime.Read(testPhysAddress, 8)
 ```
